@@ -16,10 +16,10 @@ namespace l6 {
 
     public:
         LException(const char* message, int opcode) : _msg(message), _opcode(opcode) {}
-        virtual const char* what() const noexcept {
+        [[nodiscard]] const char* what() const noexcept override {
             return _msg;
         }
-        int opcode() const noexcept {
+        [[nodiscard]] int opcode() const noexcept {
             return _opcode;
         }
     };

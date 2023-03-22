@@ -56,13 +56,13 @@ namespace l6 {
                 _fileNames.push_back(entry.path().filename().string());
                 _files.insert({entry.path().filename().string(), new Directory(entry.path(), GetLevel()+1, false, fetchSubFolders)});
                 if(fetchSubFolders)
-                    static_cast<Directory*>(_files[entry.path().filename().string()])->FetchDir(true);
+                    dynamic_cast<Directory*>(_files[entry.path().filename().string()])->FetchDir(true);
             }
         }
     }
 
     void Directory::PrintName() {
-        std::string tabs = "";
+        std::string tabs;
         for(int i = 0; i<GetLevel(); i++)
             tabs += "\t";
         printf("%s%s/\n", tabs.c_str(), GetFileName().c_str());
@@ -73,13 +73,13 @@ namespace l6 {
     FObject *Directory::FindInFiles(std::string filename) {
         FObject* result = nullptr;
 
-        for(std::string el: _fileNames) {
+        for(std::string& el: _fileNames) {
             if(el == filename) {
                 result = _files[el];
                 break;
             }
             if(_files[el]->IsDirectory()) {
-                Directory* buf = static_cast<Directory *>(_files[el]);
+                auto* buf = dynamic_cast<Directory *>(_files[el]);
                 result = buf->FindInFiles(filename);
                 if(result)
                     break;
@@ -100,7 +100,7 @@ namespace l6 {
             if(el == buf)
                 contains = true;
         if(contains) {
-            if(!path.empty() && _files[buf]->IsDirectory()) result = static_cast<Directory*>(_files[buf])->FindByPathStack(path);
+            if(!path.empty() && _files[buf]->IsDirectory()) result = dynamic_cast<Directory*>(_files[buf])->FindByPathStack(path);
             else if(path.empty()) return _files[buf];
         } else return nullptr;
 
@@ -132,7 +132,7 @@ namespace l6 {
         _files.clear();
     }
 
-    bool Directory::HasName(std::string name) {
+    bool Directory::HasName(std::string name) const {
         bool result = false;
 
         for(const std::string& el: _fileNames)

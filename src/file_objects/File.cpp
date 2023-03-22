@@ -18,11 +18,11 @@ namespace l6 {
     File::File(std::filesystem::path path)
     : File(path, 0) {}
 
-    std::string File::GetExtension() {
+    std::string File::GetExtension() const {
         return _extension;
     }
 
-    std::string File::GetNameOnly() {
+    std::string File::GetNameOnly() const {
         std::string result = GetFileName();
         int dotPos = result.find_last_of('.');
         result.erase(result.begin()+dotPos, result.end());
@@ -30,7 +30,7 @@ namespace l6 {
     }
 
     void File::PrintName() {
-        std::string tabs = "";
+        std::string tabs;
         for(int i = 0; i<GetLevel(); i++)
             tabs += "\t";
         printf("%s%s(%s)\n", tabs.c_str(), GetNameOnly().c_str(), GetExtension().c_str());

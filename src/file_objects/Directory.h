@@ -24,7 +24,7 @@ namespace l6 {
     public:
         Directory(std::filesystem::path path, int level, bool isMain, bool fetchSubFolders);
         Directory(std::filesystem::path path, bool fetchSubFolders);
-        Directory(std::filesystem::path path);
+        explicit Directory(std::filesystem::path path);
         Directory(std::filesystem::path path, bool isMain, bool fetchSubFolders);
         ~Directory() override;
         void FetchDir(bool fetchSubFolders);
@@ -32,7 +32,7 @@ namespace l6 {
         FObject* FindInFiles(std::string filename);
         FObject* FindByPath(std::string path);
         void ClearFilesData();
-        bool HasName(std::string name);
+        bool HasName(std::string name) const;
     };
 
 } // l6

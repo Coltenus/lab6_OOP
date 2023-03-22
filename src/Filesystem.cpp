@@ -58,7 +58,7 @@ namespace l6 {
         if(inCurrent) {
             FObject* result = nullptr;
             if(_current && _current->IsDirectory()) {
-                result = static_cast<Directory*>(_current)->FindByPath(path);
+                result = dynamic_cast<Directory*>(_current)->FindByPath(path);
             }
             if(result && result->IsDirectory()) {
                 std::string newPath = result->GetFullPath();
@@ -81,7 +81,7 @@ namespace l6 {
 
     void Filesystem::CreateFolder(std::string name, bool rewrite) {
         if(_current && _current->IsDirectory()) {
-            Directory *current = static_cast<Directory*>(_current);
+            auto *current = dynamic_cast<Directory*>(_current);
             if (current->HasName(name) && rewrite)
                 std::filesystem::remove_all(current->GetFullPath() + '/' + name);
             if (rewrite || !current->HasName(name))
@@ -92,7 +92,7 @@ namespace l6 {
 
     void Filesystem::CreateFile(std::string name, bool rewrite) {
         if(_current && _current->IsDirectory()) {
-            Directory *current = static_cast<Directory*>(_current);
+            auto *current = dynamic_cast<Directory*>(_current);
             if (current->HasName(name) && rewrite)
                 std::filesystem::remove_all(current->GetFullPath() + '/' + name);
             if (rewrite || !current->HasName(name))
@@ -103,7 +103,7 @@ namespace l6 {
 
     void Filesystem::Remove(std::string name) {
         if(_current && _current->IsDirectory()) {
-            Directory *current = static_cast<Directory*>(_current);
+            auto *current = dynamic_cast<Directory*>(_current);
             if(current->HasName(name))
                 std::filesystem::remove_all(current->GetFullPath() + '/' + name);
             current->FetchDir(true);
@@ -112,7 +112,7 @@ namespace l6 {
 
     void Filesystem::Rename(std::string oldName, std::string newName) {
         if(_current && _current->IsDirectory()) {
-            Directory *current = static_cast<Directory*>(_current);
+            auto *current = dynamic_cast<Directory*>(_current);
             if(current->HasName(oldName) && !current->HasName(newName))
                 std::filesystem::rename(current->GetFullPath() + '/' + oldName, current->GetFullPath() + '/' + newName);
             current->FetchDir(true);
@@ -121,7 +121,7 @@ namespace l6 {
 
     void Filesystem::Replace(std::string name, std::string path) {
         if(_current && _current->IsDirectory()) {
-            Directory *current = static_cast<Directory*>(_current);
+            auto *current = dynamic_cast<Directory*>(_current);
             if(current->HasName(name) && std::filesystem::exists(path))
                 std::filesystem::rename(current->GetFullPath() + '/' + name, path + '/' + name);
             current->FetchDir(true);
@@ -130,14 +130,14 @@ namespace l6 {
 
     void Filesystem::Copy(std::string name, std::string path, std::string newName) {
         if(_current && _current->IsDirectory()) {
-            Directory *current = static_cast<Directory*>(_current);
+            auto *current = dynamic_cast<Directory*>(_current);
             if(current->HasName(name) && std::filesystem::exists(path))
                 std::filesystem::copy(current->GetFullPath() + '/' + name, path + '/' + newName, std::filesystem::copy_options::recursive);
             current->FetchDir(true);
         }
     }
 
-    std::string Filesystem::GetCurrentPath() {
+    std::string Filesystem::GetCurrentPath() const {
         return _current->GetFullPath();
     }
 } // l6
