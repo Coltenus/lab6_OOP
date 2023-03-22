@@ -5,20 +5,21 @@
 #include "File.h"
 
 namespace l6 {
-    File::File(std::filesystem::path path, std::string filename, int level) : FObject(path, filename, level) {
+    File::File(std::filesystem::path path, int level) : FObject(path, level, false) {
+        std::string filename = GetFileName();
         int dotPos = filename.find_last_of('.');
-        filename.erase(filename.begin(), filename.begin()+dotPos);
-        _extension = filename;
+        if(dotPos != -1) {
+            filename.erase(filename.begin(), filename.begin()+dotPos+1);
+            _extension = filename;
+        }
+        else _extension = "no ext";
     }
 
-    std::string File::GetExtension(bool clear) {
-        std::string result = _extension;
+    File::File(std::filesystem::path path)
+    : File(path, 0) {}
 
-        if(clear) {
-            result.erase(result.begin());
-        }
-
-        return result;
+    std::string File::GetExtension() {
+        return _extension;
     }
 
     std::string File::GetNameOnly() {

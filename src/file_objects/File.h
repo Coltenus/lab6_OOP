@@ -14,9 +14,10 @@ namespace l6 {
         std::string _extension;
 
     public:
-        File(std::filesystem::path path, std::string filename, int level);
+        File(std::filesystem::path path, int level);
+        File(std::filesystem::path path);
         ~File() override = default;
-        std::string GetExtension(bool clear = true);
+        std::string GetExtension();
         std::string GetNameOnly();
         void PrintName() override;
     };

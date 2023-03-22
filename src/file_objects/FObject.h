@@ -6,6 +6,7 @@
 #define LAB6_FOBJECT_H
 
 #include <filesystem>
+#include "../utils/LException.h"
 
 namespace l6 {
 
@@ -13,19 +14,23 @@ namespace l6 {
     private:
         std::filesystem::path _path;
         std::string _filename;
-        bool _existing;
         int _level;
+        bool _isDirectory;
 
     public:
-        FObject(std::filesystem::path path, std::string filename, int level)
-        : _path(path), _filename(filename), _existing(true), _level(level) {}
+        FObject(std::filesystem::path path, int level, bool isDirectory)
+        : _path(path), _filename(path.filename().string()), _level(level), _isDirectory(isDirectory) {
+            if(!std::filesystem::exists(path))
+                throw LException("There is no such file or directory.", 1);
+        }
         virtual ~FObject() = default;
-        std::filesystem::path GetPath() { return _path; }
+        std::filesystem::path GetPathObject() { return _path; }
         std::string GetFileName() { return _filename; }
         int GetLevel() { return _level; }
-        bool IsExisting() { return _existing; }
-        void Missed() { _existing = false; }
         virtual void PrintName() { printf("%s\n", _filename.c_str()); }
+        std::string GetPath() { return _path.relative_path().string(); }
+        std::string GetFullPath() { return _path.parent_path().string() + '/' + _path.filename().string(); }
+        bool IsDirectory() { return _isDirectory; }
     };
 
 } // l6

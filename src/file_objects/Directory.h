@@ -5,20 +5,34 @@
 #ifndef LAB6_DIRECTORY_H
 #define LAB6_DIRECTORY_H
 
-#include <set>
+#include <unordered_map>
+#include <vector>
+#include <stack>
+#include <thread>
 #include "FObject.h"
 
 namespace l6 {
 
     class Directory : public FObject {
     private:
-        std::set<FObject*> files;
+        std::thread* _update;
+        std::unordered_map<std::string, FObject*> _files;
+        std::vector<std::string> _fileNames;
+        FObject* FindByPathStack(std::stack<std::string>& path);
+        bool _endUpdate;
 
     public:
-        Directory(std::filesystem::path path, std::string filename, int level);
+        Directory(std::filesystem::path path, int level, bool isMain, bool fetchSubFolders);
+        Directory(std::filesystem::path path, bool fetchSubFolders);
+        Directory(std::filesystem::path path);
+        Directory(std::filesystem::path path, bool isMain, bool fetchSubFolders);
         ~Directory() override;
-        void FetchDir();
+        void FetchDir(bool fetchSubFolders);
         void PrintName() override;
+        FObject* FindInFiles(std::string filename);
+        FObject* FindByPath(std::string path);
+        void ClearFilesData();
+        bool HasName(std::string name);
     };
 
 } // l6
