@@ -24,13 +24,13 @@ namespace l6 {
                 throw LException("There is no such file or directory.", 1);
         }
         virtual ~FObject() = default;
-        std::filesystem::path GetPathObject() { return _path; }
-        std::string GetFileName() { return _filename; }
-        int GetLevel() { return _level; }
+        std::filesystem::path GetPathObject() const { return _path; }
+        std::string GetFileName() const { return _filename; }
+        int GetLevel() const { return _level; }
         virtual void PrintName() { printf("%s\n", _filename.c_str()); }
-        std::string GetPath() { return _path.relative_path().string(); }
-        std::string GetFullPath() { return _path.parent_path().string() + '/' + _path.filename().string(); }
-        bool IsDirectory() { return _isDirectory; }
+        std::string GetPath() const { return _path.relative_path().string(); }
+        std::string GetFullPath() const { return _path.parent_path().string() + '/' + _path.filename().string(); }
+        bool IsDirectory() const { return _isDirectory; }
     };
 
 } // l6

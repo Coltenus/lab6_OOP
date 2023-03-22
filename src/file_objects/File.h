@@ -15,10 +15,10 @@ namespace l6 {
 
     public:
         File(std::filesystem::path path, int level);
-        File(std::filesystem::path path);
+        explicit File(std::filesystem::path path);
         ~File() override = default;
-        std::string GetExtension();
-        std::string GetNameOnly();
+        std::string GetExtension() const;
+        std::string GetNameOnly() const;
         void PrintName() override;
     };
 

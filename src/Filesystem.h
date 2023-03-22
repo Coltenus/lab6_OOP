@@ -29,7 +29,7 @@ namespace l6 {
         void Rename(std::string oldName, std::string newName);
         void Replace(std::string name, std::string path);
         void Copy(std::string name, std::string path, std::string newName);
-        std::string GetCurrentPath();
+        [[nodiscard]] std::string GetCurrentPath() const;
     };
 
 } // l6
