@@ -29,7 +29,11 @@ namespace l6 {
         int GetLevel() const { return _level; }
         virtual void PrintName() { printf("%s\n", _filename.c_str()); }
         std::string GetPath() const { return _path.relative_path().string(); }
-        std::string GetFullPath() const { return _path.parent_path().string() + '/' + _path.filename().string(); }
+        std::string GetFullPath() const {
+            if(!_path.filename().string().empty())
+                return _path.parent_path().string() + '/' + _path.filename().string();
+            else return _path.parent_path().string();
+        }
         bool IsDirectory() const { return _isDirectory; }
     };
 

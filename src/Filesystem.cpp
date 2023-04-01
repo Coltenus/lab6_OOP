@@ -6,10 +6,12 @@
 #include <unistd.h>
 #define DELAY_FOR_FETCH 10000
 #ifdef _WIN32
-#define ROOT ":/"
+#define ROOT "C:/"
+#define UP ":/"
 #endif
 #ifdef __linux__
-#define ROOT "home/"
+#define ROOT "/"
+#define UP ROOT
 #endif
 
 namespace l6 {
@@ -32,19 +34,7 @@ namespace l6 {
 
     void Filesystem::Open(std::string path) {
         Clear();
-        try {
-            if (std::filesystem::is_directory(path)) {
-                _current = new Directory(std::filesystem::path(path));
-            } else if (std::filesystem::is_regular_file(path)) {
-                _current = new File(std::filesystem::path(path));
-            }
-            if(_current)
-                usleep(DELAY_FOR_FETCH);
-        }
-        catch (LException& ex) {
-            printf("%s\n", ex.what());
-            _current = nullptr;
-        }
+        _current = OpenObject(path);
     }
 
     void Filesystem::Clear() {
@@ -56,13 +46,12 @@ namespace l6 {
 
     void Filesystem::Open(std::string path, bool inCurrent) {
         if(inCurrent) {
-            FObject* result = nullptr;
+            std::string result;
             if(_current && _current->IsDirectory()) {
                 result = dynamic_cast<Directory*>(_current)->FindByPath(path);
             }
-            if(result && result->IsDirectory()) {
-                std::string newPath = result->GetFullPath();
-                Open(newPath);
+            if(std::filesystem::is_directory(result)) {
+                Open(result);
             }
         }
         else Open(path);
@@ -73,7 +62,7 @@ namespace l6 {
     }
 
     void Filesystem::GoUpper() {
-        if(!_current->GetFullPath().ends_with(ROOT)) {
+        if(_current && !_current->GetFullPath().ends_with(UP)) {
             std::string newPath = _current->GetPathObject().parent_path().string();
             Open(newPath);
         }
@@ -86,7 +75,7 @@ namespace l6 {
                 std::filesystem::remove_all(current->GetFullPath() + '/' + name);
             if (rewrite || !current->HasName(name))
                 std::filesystem::create_directory(current->GetFullPath() + '/' + name);
-            current->FetchDir(true);
+            current->FetchDir();
         }
     }
 
@@ -97,7 +86,7 @@ namespace l6 {
                 std::filesystem::remove_all(current->GetFullPath() + '/' + name);
             if (rewrite || !current->HasName(name))
                 std::filesystem::create_directory(current->GetFullPath() + '/' + name);
-            current->FetchDir(true);
+            current->FetchDir();
         }
     }
 
@@ -106,7 +95,7 @@ namespace l6 {
             auto *current = dynamic_cast<Directory*>(_current);
             if(current->HasName(name))
                 std::filesystem::remove_all(current->GetFullPath() + '/' + name);
-            current->FetchDir(true);
+            current->FetchDir();
         }
     }
 
@@ -115,7 +104,7 @@ namespace l6 {
             auto *current = dynamic_cast<Directory*>(_current);
             if(current->HasName(oldName) && !current->HasName(newName))
                 std::filesystem::rename(current->GetFullPath() + '/' + oldName, current->GetFullPath() + '/' + newName);
-            current->FetchDir(true);
+            current->FetchDir();
         }
     }
 
@@ -124,7 +113,7 @@ namespace l6 {
             auto *current = dynamic_cast<Directory*>(_current);
             if(current->HasName(name) && std::filesystem::exists(path))
                 std::filesystem::rename(current->GetFullPath() + '/' + name, path + '/' + name);
-            current->FetchDir(true);
+            current->FetchDir();
         }
     }
 
@@ -133,11 +122,82 @@ namespace l6 {
             auto *current = dynamic_cast<Directory*>(_current);
             if(current->HasName(name) && std::filesystem::exists(path))
                 std::filesystem::copy(current->GetFullPath() + '/' + name, path + '/' + newName, std::filesystem::copy_options::recursive);
-            current->FetchDir(true);
+            current->FetchDir();
         }
     }
 
     std::string Filesystem::GetCurrentPath() const {
-        return _current->GetFullPath();
+        if(_current)
+            return _current->GetFullPath();
+        else return "";
+    }
+
+    FObject *Filesystem::GetByPath(std::string path) {
+        FObject* result = nullptr;
+        if(_current) {
+            if(path.ends_with('/') || path.ends_with('\\'))
+                path.erase(path.end()-1);
+            if(!_current->IsDirectory()) {
+                result = GetNameIfCurrent(path);
+            } else {
+                Directory* dir = dynamic_cast<Directory *>(_current);
+                std::string fullPath = dir->FindByPath(path);
+                if(!fullPath.empty()) {
+                    result = OpenObject(fullPath);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    FObject* Filesystem::GetNameIfCurrent(std::string path) {
+        FObject* result = nullptr;
+        if(path.ends_with(_current->GetFileName()))
+            result = _current;
+        return result;
+    }
+
+    FObject *Filesystem::OpenObject(std::string path) {
+        FObject* result = nullptr;
+
+        try {
+            if (std::filesystem::is_directory(path)) {
+                result = new Directory(std::filesystem::path(path));
+            } else if (std::filesystem::is_regular_file(path)) {
+                result = new File(std::filesystem::path(path));
+            }
+            if(result && result->IsDirectory()) {
+                Directory* dir = dynamic_cast<Directory *>(result);
+                dir->FetchDir();
+            }
+        }
+        catch (LException& ex) {
+            printf("%s\n", ex.what());
+            result = nullptr;
+        }
+
+        return result;
+    }
+
+    FObject *Filesystem::GetByName(std::string filename) {
+        FObject* result = nullptr;
+        if(_current) {
+            if(!_current->IsDirectory() && _current->GetFileName() == filename) {
+                result = _current;
+            } else {
+                Directory* dir = dynamic_cast<Directory *>(_current);
+                std::string fullPath = dir->FindInFiles(filename);
+                if(!fullPath.empty()) {
+                    result = OpenObject(fullPath);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    Directory *Filesystem::GetRoot() {
+        return new Directory(ROOT);
     }
 } // l6

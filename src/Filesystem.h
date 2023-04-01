@@ -12,6 +12,7 @@ namespace l6 {
     class Filesystem {
     private:
         FObject* _current;
+        FObject* GetNameIfCurrent(std::string path);
 
     public:
         Filesystem();
@@ -30,6 +31,10 @@ namespace l6 {
         void Replace(std::string name, std::string path);
         void Copy(std::string name, std::string path, std::string newName);
         [[nodiscard]] std::string GetCurrentPath() const;
+        FObject* GetByPath(std::string path);
+        FObject* GetByName(std::string filename);
+        FObject* OpenObject(std::string path);
+        Directory* GetRoot();
     };
 
 } // l6

@@ -8,41 +8,17 @@
 #define UPDATE_TIME 5
 
 namespace l6 {
-    Directory::Directory(std::filesystem::path path, int level, bool isMain, bool fetchSubFolders)
-            : FObject(path, level, true), _endUpdate(false) {
-        if(isMain) {
-            _update = new std::thread([this, fetchSubFolders]() {
-                while (!_endUpdate) {
-                    FetchDir(fetchSubFolders);
-                    sleep(UPDATE_TIME);
-                }
-            });
-            _update->detach();
-        }
-        else {
-            _update = nullptr;
-            FetchDir(fetchSubFolders);
-        }
-    }
-
-    Directory::Directory(std::filesystem::path path, bool fetchSubFolders)
-            : Directory(path, 0, true, fetchSubFolders) {}
+    Directory::Directory(std::filesystem::path path, int level)
+            : FObject(path, level, true) {}
 
     Directory::Directory(std::filesystem::path path)
-            : Directory(path, true) {}
-
-    Directory::Directory(std::filesystem::path path, bool isMain, bool fetchSubFolders)
-            : Directory(path, 0, isMain, fetchSubFolders) {}
+            : Directory(path, 0) {}
 
     Directory::~Directory() {
-        if(_update && _update->joinable()) {
-            _update->join();
-            delete _update;
-        }
         ClearFilesData();
     }
 
-    void Directory::FetchDir(bool fetchSubFolders) {
+    void Directory::FetchDir() {
         std::filesystem::path path = GetPathObject();
         ClearFilesData();
 
@@ -55,9 +31,7 @@ namespace l6 {
             else if(entry.is_directory())
             {
                 _fileNames.push_back(entry.path().filename().string());
-                _files.insert({entry.path().filename().string(), new Directory(entry.path(), GetLevel()+1, false, fetchSubFolders)});
-                if(fetchSubFolders)
-                    dynamic_cast<Directory*>(_files[entry.path().filename().string()])->FetchDir(true);
+                _files.insert({entry.path().filename().string(), new Directory(entry.path(), GetLevel()+1)});
             }
         }
     }
@@ -67,33 +41,41 @@ namespace l6 {
         for(int i = 0; i<GetLevel(); i++)
             tabs += "\t";
         printf("%s%s/\n", tabs.c_str(), GetFileName().c_str());
+        FetchDir();
         for(auto& el: _fileNames)
             _files[el]->PrintName();
+        if(GetLevel() == 0)
+            ClearFilesData();
     }
 
-    FObject *Directory::FindInFiles(std::string filename) {
-        FObject* result = nullptr;
+    std::string Directory::FindInFiles(std::string filename) {
+        std::string result;
+        FetchDir();
 
         for(std::string& el: _fileNames) {
             if(el == filename) {
-                result = _files[el];
+                result = _files[el]->GetFullPath();
                 break;
             }
-            if(_files[el]->IsDirectory()) {
+            else if(_files[el]->IsDirectory()) {
                 auto* buf = dynamic_cast<Directory *>(_files[el]);
                 result = buf->FindInFiles(filename);
-                if(result)
+                if(!result.empty())
                     break;
             }
+        }
+        if(GetLevel() == 0) {
+            ClearFilesData();
         }
 
         return result;
     }
 
-    FObject *Directory::FindByPathStack(std::stack<std::string>& path) {
-        FObject* result;
+    std::string Directory::FindByPathStack(std::stack<std::string>& path) {
+        std::string result;
         if(path.empty())
-            return nullptr;
+            return "";
+        FetchDir();
         std::string buf = path.top();
         path.pop();
         bool contains = false;
@@ -102,15 +84,18 @@ namespace l6 {
                 contains = true;
         if(contains) {
             if(!path.empty() && _files[buf]->IsDirectory()) result = dynamic_cast<Directory*>(_files[buf])->FindByPathStack(path);
-            else if(path.empty()) return _files[buf];
-        } else return nullptr;
+            else if(path.empty()) result = _files[buf]->GetFullPath();
+        }
+        if(GetLevel() == 0) {
+            ClearFilesData();
+        }
 
         return result;
     }
 
-    FObject *Directory::FindByPath(std::string path) {
+    std::string Directory::FindByPath(std::string path) {
         std::stack<std::string> pathStack;
-        FObject* result;
+        std::string result;
 
         while(path != ".") {
             int slashPos = path.find_last_of('/');
