@@ -44,8 +44,8 @@ namespace l6 {
         bool result = false;
         static auto GetNewName = [](std::filesystem::path path) {
             std::filesystem::path textC = path;
-            std::string filename = textC.filename();
-            std::string ext = textC.extension();
+            std::string filename = textC.filename().string();
+            std::string ext = textC.extension().string();
             int extP = filename.rfind(ext);
             filename.erase(filename.begin()+extP, filename.end());
             textC.replace_filename(filename+"_new"+ext);
@@ -61,7 +61,7 @@ namespace l6 {
 
         if(mode != None){
             char buffer[100];
-            auto path = std::string(std::filesystem::absolute(text));
+            auto path = std::string(std::filesystem::absolute(text).string());
             auto lua = new LuaFile(_scripts[pos]);
             std::ifstream rFile(path);
             switch (mode) {

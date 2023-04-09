@@ -6,8 +6,8 @@
 #include <unistd.h>
 #define DELAY_FOR_FETCH 10000
 #ifdef _WIN32
-#define ROOT "C:/"
-#define UP ":/"
+#define ROOT "C:\\"
+#define UP ":\\"
 #endif
 #ifdef __linux__
 #define ROOT "/"
@@ -15,7 +15,9 @@
 #endif
 
 namespace l6 {
-    Filesystem::Filesystem() : _current(nullptr) {}
+    Filesystem::Filesystem() : _current(nullptr) {
+        Open(ROOT);
+    }
 
     Filesystem::Filesystem(std::string path) : _current(nullptr) {
         Open(path);

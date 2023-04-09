@@ -30,6 +30,8 @@ namespace l6 {
         virtual void PrintName() { printf("%s\n", _filename.c_str()); }
         std::string GetPath() const { return _path.relative_path().string(); }
         std::string GetFullPath() const {
+            if(this == nullptr)
+                throw LException("There is no object.", 2);
             if(!_path.filename().string().empty())
                 return _path.parent_path().string() + '/' + _path.filename().string();
             else return _path.parent_path().string();
