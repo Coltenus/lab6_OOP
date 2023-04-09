@@ -9,7 +9,7 @@ namespace l6 {
         _lua.open_libraries(sol::lib::base);
         if(std::filesystem::exists(path))
         {
-            _lua.do_file(path);
+            _lua.do_file(path.string());
             _exist = true;
         }
         else _exist = false;
