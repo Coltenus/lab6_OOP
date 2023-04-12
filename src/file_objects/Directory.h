@@ -25,10 +25,13 @@ namespace l6 {
         ~Directory() override;
         void FetchDir();
         void PrintName() override;
-        std::string FindInFiles(std::string filename);
+        std::string FindInFiles(const std::string& filename);
+        std::string FindInFiles(const std::string& start, const std::string& end, bool greater);
+        void FindInFilesVec(std::vector<std::string>& files, const std::string& filename);
+        void FindInFilesVec(std::vector<std::string>& files, const std::string& start, const std::string& end, bool greater);
         std::string FindByPath(std::string path);
         void ClearFilesData();
-        bool HasName(std::string name) const;
+        bool HasName(const std::string& name) const;
     };
 
 } // l6

@@ -5,14 +5,16 @@
 #include "Directory.h"
 #include "File.h"
 #include <unistd.h>
+
+#include <utility>
 #define UPDATE_TIME 5
 
 namespace l6 {
     Directory::Directory(std::filesystem::path path, int level)
-            : FObject(path, level, true) {}
+            : FObject(std::move(path), level, true) {}
 
     Directory::Directory(std::filesystem::path path)
-            : Directory(path, 0) {}
+            : Directory(std::move(path), 0) {}
 
     Directory::~Directory() {
         ClearFilesData();
@@ -48,7 +50,7 @@ namespace l6 {
             ClearFilesData();
     }
 
-    std::string Directory::FindInFiles(std::string filename) {
+    std::string Directory::FindInFiles(const std::string& filename) {
         std::string result;
         FetchDir();
 
@@ -118,7 +120,7 @@ namespace l6 {
         _files.clear();
     }
 
-    bool Directory::HasName(std::string name) const {
+    bool Directory::HasName(const std::string& name) const {
         bool result = false;
 
         for(const std::string& el: _fileNames)
@@ -128,5 +130,67 @@ namespace l6 {
             }
 
         return result;
+    }
+
+    std::string Directory::FindInFiles(const std::string& start, const std::string& end, bool greater) {
+        std::string result;
+        int size = start.size() + end.size() + 1;
+        FetchDir();
+
+        for(std::string& el: _fileNames) {
+            if(el.starts_with(start) && el.ends_with(end)
+            && (greater && el.size() >= size || !greater && el.size() == size)) {
+                result = _files[el]->GetFullPath();
+                break;
+            }
+            else if(_files[el]->IsDirectory()) {
+                auto* buf = dynamic_cast<Directory *>(_files[el]);
+                result = buf->FindInFiles(start, end, greater);
+                if(!result.empty())
+                    break;
+            }
+        }
+        if(GetLevel() == 0) {
+            ClearFilesData();
+        }
+
+        return result;
+    }
+
+    void Directory::FindInFilesVec(std::vector<std::string>& files, const std::string &filename) {
+        FetchDir();
+
+        for(std::string& el: _fileNames) {
+            if(el == filename) {
+                files.push_back(_files[el]->GetFullPath());
+            }
+            else if(_files[el]->IsDirectory()) {
+                auto* buf = dynamic_cast<Directory *>(_files[el]);
+                buf->FindInFilesVec(files, filename);
+            }
+        }
+        if(GetLevel() == 0) {
+            ClearFilesData();
+        }
+    }
+
+    void Directory::FindInFilesVec(std::vector<std::string> &files, const std::string &start,
+                                   const std::string &end, bool greater) {
+        int size = start.size() + end.size() + 1;
+        FetchDir();
+
+        for(std::string& el: _fileNames) {
+            if(el.starts_with(start) && el.ends_with(end)
+               && (greater && el.size() >= size || !greater && el.size() == size)) {
+                files.push_back(_files[el]->GetFullPath());
+            }
+            else if(_files[el]->IsDirectory()) {
+                auto* buf = dynamic_cast<Directory *>(_files[el]);
+                buf->FindInFilesVec(files, start, end, greater);
+            }
+        }
+        if(GetLevel() == 0) {
+            ClearFilesData();
+        }
     }
 } // l6

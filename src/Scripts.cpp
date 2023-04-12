@@ -41,6 +41,7 @@ namespace l6 {
     }
 
     bool Scripts::ChangeRows(int pos, std::filesystem::path text, Mode mode, std::string* data) {
+        const char* FunctionName = "rows";
         bool result = false;
         static auto GetNewName = [](std::filesystem::path path) {
             std::filesystem::path textC = path;
@@ -80,22 +81,34 @@ namespace l6 {
             }
             while (lua->IsExist() && rFile.is_open() && !rFile.eof()) {
                 rFile.getline(buffer, 100);
-                switch (mode) {
-                    case Terminal:
-                        printf("%s\n", (*lua)(std::string(buffer), "row").c_str());
-                        break;
-                    case NewFile:
-                        {
+                try{
+                    switch (mode) {
+                        case Terminal: {
+                            std::string formatT = "%s";
+                            if (!rFile.eof())
+                                formatT += '\n';
+                            printf(formatT.c_str(), (*lua)(std::string(buffer), FunctionName).c_str());
+                        }
+                            break;
+                        case NewFile: {
                             std::filesystem::path textC = GetNewName(text);
                             std::ofstream wFile(textC, std::ofstream::app);
-                            auto bufStr = (*lua)(std::string(buffer), "row") + '\n';
+                            auto bufStr = (*lua)(std::string(buffer), FunctionName);
+                            if (!rFile.eof())
+                                bufStr += '\n';
                             wFile.write(bufStr.c_str(), bufStr.size());
                             wFile.close();
                         }
-                        break;
-                    case ReturnData:
-                        *data += (*lua)(std::string(buffer), "row") + '\n';
-                        break;
+                            break;
+                        case ReturnData:
+                            *data += (*lua)(std::string(buffer), FunctionName);
+                            if (!rFile.eof())
+                                *data += '\n';
+                            break;
+                    }
+                }
+                catch (sol::error& err) {
+//                    std::cout << err.what() << '\n';
                 }
             }
             rFile.close();
