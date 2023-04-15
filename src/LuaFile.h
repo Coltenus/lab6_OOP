@@ -19,12 +19,12 @@ namespace l6 {
         explicit LuaFile(std::filesystem::path path);
         ~LuaFile() = default;
         template<typename T>
-        T operator()(T val, std::string function);
+        T operator()(T val, const std::string& function);
         bool IsExist();
     };
 
     template<typename T>
-    T LuaFile::operator()(T val, std::string function) {
+    T LuaFile::operator()(T val, const std::string& function) {
         T result;
         if(_exist){
             auto lua_result = _lua[function.c_str()](val);

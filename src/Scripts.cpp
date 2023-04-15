@@ -31,7 +31,7 @@ namespace l6 {
     }
 
     void Scripts::PrintNames() {
-        int i = 0;
+        int i = 1;
         printf("Here are the found scripts:\n");
         for(auto& el: _scripts) {
             printf("\t%d) %s\n", i, el.filename().string().c_str());
@@ -52,8 +52,9 @@ namespace l6 {
             textC.replace_filename(filename+"_new"+ext);
             return textC;
         };
+        pos--;
 
-        if(pos < _scripts.size() && std::filesystem::exists(_scripts[pos]))
+        if(pos >= 0 && pos < _scripts.size() && std::filesystem::exists(_scripts[pos]))
             result = true;
         else return false;
 

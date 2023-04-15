@@ -7,18 +7,9 @@
 
 #include "file_objects/file_objects.h"
 #include "Scripts.h"
-
-#ifdef _WIN32
-#define ROOT "C:\\"
-#define UP ":\\"
-#define SEP '\\'
-#endif
-#ifdef __linux__
-#define ROOT "/"
-#define UP ROOT
+#define UP "/"
 #define SEP '/'
 #define fopen_s(pFile,filename,mode) ((*(pFile))=fopen((filename),(mode)))==NULL
-#endif
 
 namespace l6 {
 
@@ -30,16 +21,16 @@ namespace l6 {
 
     public:
         Filesystem();
-        explicit Filesystem(std::string path);
+        explicit Filesystem(const std::string& path);
         ~Filesystem();
-        void Print();
-        void Open(std::string path);
+        void Print(bool check = true);
+        void Open(const std::string& path);
         void Open(const std::string& path, bool inCurrent);
         void Clear();
         bool IsOpened();
         void GoUpper();
         void CreateFolder(const std::string& name, bool rewrite = false);
-        static void CreateFolder(std::filesystem::path path, const std::string& name, bool rewrite = false);
+        static void CreateFolder(const std::filesystem::path& path, const std::string& name, bool rewrite = false);
         void Remove(const std::string& name);
         static void Remove(const std::filesystem::path& path, const std::string& name);
         void Rename(const std::string& oldName, const std::string& newName);
@@ -57,10 +48,15 @@ namespace l6 {
         template<typename T>
         int CreateFile(const std::filesystem::path& path, std::string filename, std::uint32_t size, T* data, bool rewrite = false);
         int CreateFile(const std::filesystem::path& path, std::string filename, std::string data, bool rewrite = false);
+        // Modify file size
         static int ModifyFile(const std::filesystem::path& path, std::uint32_t size);
+        // Prints existing lua scripts in generated folder
         void PrintLua();
         void RefreshLua();
+        // Modify file with lua script
         int ModifyFile(int fileNum, const std::filesystem::path& path);
+        [[nodiscard]] FObject* GetCurrent() const;
+        [[nodiscard]] bool IsDirectory() const;
     };
 
     template<typename T>

@@ -10,11 +10,11 @@
 #define UPDATE_TIME 5
 
 namespace l6 {
-    Directory::Directory(std::filesystem::path path, int level)
-            : FObject(std::move(path), level, true) {}
+    Directory::Directory(const std::filesystem::path& path, int level)
+            : FObject(path, level, true) {}
 
-    Directory::Directory(std::filesystem::path path)
-            : Directory(std::move(path), 0) {}
+    Directory::Directory(const std::filesystem::path& path)
+            : Directory(path, 0) {}
 
     Directory::~Directory() {
         ClearFilesData();
@@ -24,30 +24,37 @@ namespace l6 {
         std::filesystem::path path = GetPathObject();
         ClearFilesData();
 
-        for (const auto & entry : std::filesystem::directory_iterator(path)) {
-            if(entry.is_regular_file()) {
-                _fileNames.push_back(entry.path().filename().string());
-                _files.insert({entry.path().filename().string(),
-                               new File(entry.path(), GetLevel() + 1)});
+        try{
+            for (const auto &entry: std::filesystem::directory_iterator(path)) {
+                if (entry.is_regular_file()) {
+                    _fileNames.push_back(entry.path().filename().string());
+                    _files.insert({entry.path().filename().string(),
+                                   new File(entry.path(), GetLevel() + 1)});
+                } else if (entry.is_directory()) {
+                    _fileNames.push_back(entry.path().filename().string());
+                    _files.insert({entry.path().filename().string(), new Directory(entry.path(), GetLevel() + 1)});
+                }
             }
-            else if(entry.is_directory())
-            {
-                _fileNames.push_back(entry.path().filename().string());
-                _files.insert({entry.path().filename().string(), new Directory(entry.path(), GetLevel()+1)});
-            }
+        }
+        catch (std::filesystem::filesystem_error& ex) {
+            std::cout << ex.what() << '\n';
         }
     }
 
-    void Directory::PrintName() {
+    void Directory::PrintName(bool check) {
         std::string tabs;
         for(int i = 0; i<GetLevel(); i++)
             tabs += "\t";
-        printf("%s%s/\n", tabs.c_str(), GetFileName().c_str());
-        FetchDir();
-        for(auto& el: _fileNames)
-            _files[el]->PrintName();
-        if(GetLevel() == 0)
-            ClearFilesData();
+        std::cout << tabs << GetFileName() << "\\ creation date:" << GetCreationDate() \
+ << ", size:" << GetSize() << " bytes, all element count:" << GetAllInnerObjectsCount() \
+ << ", this folder element count:" << GetInnerObjectsCount() << '\n';
+        if(check && GetLevel() < 1){
+            FetchDir();
+            for (auto &el: _fileNames)
+                _files[el]->PrintName(check);
+            if (GetLevel() == 0)
+                ClearFilesData();
+        }
     }
 
     std::string Directory::FindInFiles(const std::string& filename) {
@@ -192,5 +199,59 @@ namespace l6 {
         if(GetLevel() == 0) {
             ClearFilesData();
         }
+    }
+
+    std::uint64_t Directory::GetSize(){
+        std::uint64_t result = 0;
+        FetchDir();
+
+        for(std::string& el: _fileNames) {
+            if(!_files.contains(el)) {
+                auto buf = _fileNames.begin();
+                while(buf != _fileNames.end() && *buf != el) {
+                    buf++;
+                }
+                _fileNames.erase(buf);
+                continue;
+            }
+            result += _files[el]->GetSize();
+        }
+        if(GetLevel() == 0) {
+            ClearFilesData();
+        }
+
+        return result;
+    }
+
+    std::uint16_t Directory::GetAllInnerObjectsCount() {
+        std::uint16_t result = 0;
+        FetchDir();
+
+        for(std::string& el: _fileNames) {
+            if(_files[el]->IsDirectory()) {
+                auto* buf = dynamic_cast<Directory *>(_files[el]);
+                result += buf->GetAllInnerObjectsCount() + 1;
+            }
+            else result++;
+        }
+        if(GetLevel() == 0) {
+            ClearFilesData();
+        }
+
+        return result;
+    }
+
+    std::uint16_t Directory::GetInnerObjectsCount() {
+        std::uint16_t result = 0;
+        FetchDir();
+
+        for(std::string& el: _fileNames) {
+            result++;
+        }
+        if(GetLevel() == 0) {
+            ClearFilesData();
+        }
+
+        return result;
     }
 } // l6

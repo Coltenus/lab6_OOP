@@ -20,18 +20,25 @@ namespace l6 {
         std::string FindByPathStack(std::stack<std::string>& path);
 
     public:
-        Directory(std::filesystem::path path, int level);
-        explicit Directory(std::filesystem::path path);
+        Directory(const std::filesystem::path& path, int level);
+        explicit Directory(const std::filesystem::path& path);
         ~Directory() override;
         void FetchDir();
-        void PrintName() override;
+        void PrintName(bool check = true) override;
+        // Exact name
         std::string FindInFiles(const std::string& filename);
+        // Using mask
         std::string FindInFiles(const std::string& start, const std::string& end, bool greater);
+        // Exact name
         void FindInFilesVec(std::vector<std::string>& files, const std::string& filename);
+        // Using mask
         void FindInFilesVec(std::vector<std::string>& files, const std::string& start, const std::string& end, bool greater);
         std::string FindByPath(std::string path);
         void ClearFilesData();
         bool HasName(const std::string& name) const;
+        std::uint64_t GetSize() override;
+        std::uint16_t GetAllInnerObjectsCount();
+        std::uint16_t GetInnerObjectsCount();
     };
 
 } // l6

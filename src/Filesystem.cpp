@@ -3,33 +3,31 @@
 //
 
 #include "Filesystem.h"
-#include <unistd.h>
 #include <fstream>
 #include <utility>
 
 namespace l6 {
     Filesystem::Filesystem() : _current(nullptr) {
-        Open(ROOT);
+        Open(std::filesystem::current_path());
     }
 
-    Filesystem::Filesystem(std::string path) : _current(nullptr) {
-        Open(std::move(path));
+    Filesystem::Filesystem(const std::string& path) : _current(nullptr) {
+        Open(path);
     }
 
     Filesystem::~Filesystem() {
         Clear();
     }
 
-    void Filesystem::Print() {
+    void Filesystem::Print(bool check) {
         if(_current) {
-            _current->PrintName();
-            printf("\n");
+            _current->PrintName(check);
         }
     }
 
-    void Filesystem::Open(std::string path) {
+    void Filesystem::Open(const std::string& path) {
         Clear();
-        _current = OpenObject(std::move(path));
+        _current = OpenObject(path);
     }
 
     void Filesystem::Clear() {
@@ -195,7 +193,7 @@ namespace l6 {
     }
 
     Directory *Filesystem::GetRoot() {
-        return new Directory(ROOT);
+        return new Directory(std::filesystem::path(getenv("HOME")).root_path());
     }
 
     int Filesystem::CreateFile(const std::filesystem::path& path, std::string filename, std::string data, bool rewrite) {
@@ -240,8 +238,8 @@ namespace l6 {
         scripts.Refresh();
     }
 
-    void Filesystem::CreateFolder(std::filesystem::path path, const std::string& name, bool rewrite) {
-        auto *current = new Directory(std::move(path));
+    void Filesystem::CreateFolder(const std::filesystem::path& path, const std::string& name, bool rewrite) {
+        auto *current = new Directory(path);
         current->FetchDir();
         if (current->HasName(name) && rewrite)
             std::filesystem::remove_all(current->GetFullPath() + '/' + name);
@@ -272,6 +270,7 @@ namespace l6 {
 
     void Filesystem::Copy(const std::filesystem::path &path, const std::string& name, const std::filesystem::path& newPath, const std::string& newName) {
         auto *current = new Directory(path);
+        current->FetchDir();
         if(current->HasName(name) && std::filesystem::exists(newPath))
             std::filesystem::copy(current->GetFullPath() + '/' + name, newPath.string() + '/' + newName, std::filesystem::copy_options::recursive);
         current->FetchDir();
@@ -306,5 +305,13 @@ namespace l6 {
         }
 
         return result;
+    }
+
+    FObject *Filesystem::GetCurrent() const {
+        return _current;
+    }
+
+    bool Filesystem::IsDirectory() const {
+        return _current->IsDirectory();
     }
 } // l6

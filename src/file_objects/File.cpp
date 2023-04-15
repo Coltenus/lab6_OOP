@@ -3,9 +3,10 @@
 //
 
 #include "File.h"
+#include <utility>
 
 namespace l6 {
-    File::File(std::filesystem::path path, int level) : FObject(path, level, false) {
+    File::File(const std::filesystem::path& path, int level) : FObject(path, level, false) {
         std::string filename = GetFileName();
         int dotPos = filename.find_last_of('.');
         if(dotPos != -1) {
@@ -13,26 +14,39 @@ namespace l6 {
             _extension = filename;
         }
         else _extension = "no ext";
+        {
+            tm *clock;
+            struct stat attrib{};
+            stat(absolute(path).c_str(), &attrib);
+            clock = localtime(&(attrib.st_mtime));
+            _modDate = {.year = clock->tm_year+1900, .month = clock->tm_mon + 1, .day = clock->tm_mday,
+                    .hour = clock->tm_hour, .minute = clock->tm_min};
+        }
+        _size = std::filesystem::file_size(path);
     }
 
-    File::File(std::filesystem::path path)
+    File::File(const std::filesystem::path& path)
     : File(path, 0) {}
 
     std::string File::GetExtension() const {
         return _extension;
     }
 
-    std::string File::GetNameOnly() const {
-        std::string result = GetFileName();
-        int dotPos = result.find_last_of('.');
-        result.erase(result.begin()+dotPos, result.end());
-        return result;
+    void File::PrintName(bool check) {
+        if(check && GetLevel() < 2){
+            std::string tabs;
+            for (int i = 0; i < GetLevel(); i++)
+                tabs += "\t";
+            std::cout << tabs << GetFileName() << '(' << GetExtension() << ") creation date:" << GetCreationDate() \
+ << ", mod date:" << GetModificationDate() << ", size:" << GetSize() << " bytes\n";
+        }
     }
 
-    void File::PrintName() {
-        std::string tabs;
-        for(int i = 0; i<GetLevel(); i++)
-            tabs += "\t";
-        printf("%s%s(%s)\n", tabs.c_str(), GetNameOnly().c_str(), GetExtension().c_str());
+    FObject::Date File::GetModificationDate() const {
+        return _modDate;
+    }
+
+    std::uint64_t File::GetSize() {
+        return _size;
     }
 } // l6

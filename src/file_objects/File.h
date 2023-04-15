@@ -12,14 +12,17 @@ namespace l6 {
     class File : public FObject {
     private:
         std::string _extension;
+        Date _modDate;
+        std::uint64_t _size;
 
     public:
-        File(std::filesystem::path path, int level);
-        explicit File(std::filesystem::path path);
+        File(const std::filesystem::path& path, int level);
+        explicit File(const std::filesystem::path& path);
         ~File() override = default;
-        std::string GetExtension() const;
-        std::string GetNameOnly() const;
-        void PrintName() override;
+        [[nodiscard]] std::string GetExtension() const;
+        void PrintName(bool check = true) override;
+        [[nodiscard]] Date GetModificationDate() const;
+        [[nodiscard]] std::uint64_t GetSize() override;
     };
 
 } // l6
